@@ -24,9 +24,10 @@ def sparse_to_dense(indices: torch.Tensor, size: int = 768) -> torch.Tensor:
     batch_size = indices.shape[0]
     dense = torch.zeros(batch_size, size, device=indices.device)
     mask = indices >= 0
-    # Clamp to avoid index errors from -1 padding
-    safe_indices = indices.clamp(min=0)
-    dense.scatter_(1, safe_indices.long(), mask.float())
+    # Build (row, col) pairs for valid indices only
+    rows = torch.arange(batch_size, device=indices.device).unsqueeze(1).expand_as(indices)[mask]
+    cols = indices[mask].long()
+    dense[rows, cols] = 1.0
     return dense
 
 
