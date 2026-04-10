@@ -29,7 +29,7 @@ from torch.utils.data import Dataset, IterableDataset
 
 # Structured dtype matching bulletformat's ChessBoard (32 bytes)
 CHESSBOARD_DTYPE = np.dtype([
-    ("occ", "<u8"),       # u64 as raw bytes (8 bytes)
+    ("occ", "u1", (8,)),  # u64 occupancy as 8 little-endian bytes
     ("pcs", "u1", (16,)), # nibble-packed pieces
     ("score", "<i2"),     # i16 centipawn eval
     ("result", "u1"),     # 0=loss, 1=draw, 2=win
@@ -37,11 +37,6 @@ CHESSBOARD_DTYPE = np.dtype([
     ("opp_ksq", "u1"),    # NSTM king square ^ 56
     ("extra", "u1", (3,)),
 ], align=False)
-
-# Compact dtype for reading occ as actual u64
-CHESSBOARD_RAW_DTYPE = np.dtype([
-    ("raw", "u1", (32,)),
-])
 
 
 def _occ_to_squares(occ_bytes: np.ndarray) -> np.ndarray:
@@ -121,12 +116,7 @@ def bulletformat_to_features_batch(
         targets are (N, 1) float32.
     """
     n = len(records)
-    occ_bytes = records["occ"].reshape(n, 8) if records["occ"].ndim == 1 else records["occ"]
-
-    # Handle the case where occ is stored as single u64 vs 8 bytes
-    if occ_bytes.ndim == 1:
-        # It's a flat u64 array, convert to bytes view
-        occ_bytes = occ_bytes.view(np.uint8).reshape(n, 8)
+    occ_bytes = records["occ"].reshape(n, 8)
 
     squares = _occ_to_squares(occ_bytes)
     pcs = records["pcs"]
