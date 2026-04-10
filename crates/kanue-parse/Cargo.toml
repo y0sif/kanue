@@ -1,0 +1,11 @@
+[package]
+name = "kanue-parse"
+version = "0.1.0"
+edition = "2021"
+description = "Fast native feature extraction for kanue chess training"
+
+[lib]
+crate-type = ["cdylib"]
+
+# Zero dependencies -- pure bit manipulation
+[dependencies]
