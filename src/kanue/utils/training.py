@@ -16,7 +16,7 @@ from kanue.utils.drive import DriveCheckpointer
 
 def train_epoch(
     model: nn.Module,
-    loader: DataLoader,
+    loader,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     loss_fn: nn.Module | None = None,
@@ -32,7 +32,7 @@ def train_epoch(
     for stm, nstm, targets in tqdm(loader, desc="Training", leave=False):
         stm = stm.to(device)
         nstm = nstm.to(device)
-        targets = targets.to(device)
+        targets = targets.to(device, dtype=torch.float32)
 
         optimizer.zero_grad()
         pred = model(stm, nstm)
@@ -48,7 +48,7 @@ def train_epoch(
 
 def evaluate(
     model: nn.Module,
-    loader: DataLoader,
+    loader,
     device: torch.device,
     loss_fn: nn.Module | None = None,
 ) -> dict:
@@ -60,12 +60,13 @@ def evaluate(
     total_loss = 0.0
     total_correct = 0
     total_samples = 0
+    n_batches = 0
 
     with torch.no_grad():
         for stm, nstm, targets in loader:
             stm = stm.to(device)
             nstm = nstm.to(device)
-            targets = targets.to(device)
+            targets = targets.to(device, dtype=torch.float32)
 
             pred = model(stm, nstm)
             total_loss += loss_fn(pred, targets).item()
@@ -75,18 +76,18 @@ def evaluate(
             target_winner = (targets > 0.5).float()
             total_correct += (pred_winner == target_winner).sum().item()
             total_samples += targets.size(0)
+            n_batches += 1
 
-    n_batches = max(len(loader), 1)
     return {
-        "loss": total_loss / n_batches,
+        "loss": total_loss / max(n_batches, 1),
         "accuracy": total_correct / max(total_samples, 1),
     }
 
 
 def train_model(
     model: nn.Module,
-    train_loader: DataLoader,
-    val_loader: DataLoader,
+    train_loader,
+    val_loader,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     epochs: int,

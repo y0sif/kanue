@@ -37,5 +37,8 @@ logs/
 .DS_Store
 Thumbs.db
 
+# Rust build artifacts
+target/
+
 # Env
 .env

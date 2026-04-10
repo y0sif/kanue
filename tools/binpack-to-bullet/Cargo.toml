@@ -1,0 +1,9 @@
+[package]
+name = "binpack-to-bullet"
+version = "0.1.0"
+edition = "2024"
+description = "Convert Stockfish .binpack files to flat bulletformat records for Python training"
+
+[dependencies]
+sfbinpack = "0.6"
+bulletformat = "1.8"

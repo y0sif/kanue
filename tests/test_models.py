@@ -1,18 +1,30 @@
 """Smoke tests for model forward passes."""
 
 import torch
-import pytest
 
 
-def test_baseline_forward():
-    from kanue.models.baseline import NnBoard768Dense
+def test_baseline_forward_sparse():
+    from kanue.models.baseline import NnBoard768
 
-    model = NnBoard768Dense(hidden_size=32)
+    model = NnBoard768(hidden_size=32)
+    # Sparse indices: (batch, max_active) with -1 padding
+    stm = torch.randint(0, 768, (4, 16))
+    nstm = torch.randint(0, 768, (4, 16))
+    out = model(stm, nstm)
+    assert out.shape == (4, 1)
+    assert (out >= 0).all() and (out <= 1).all(), "Output should be in [0, 1] (sigmoid)"
+
+
+def test_baseline_forward_dense():
+    from kanue.models.baseline import NnBoard768
+
+    model = NnBoard768(hidden_size=32)
+    # Dense input: (batch, 768)
     stm = torch.randn(4, 768)
     nstm = torch.randn(4, 768)
     out = model(stm, nstm)
     assert out.shape == (4, 1)
-    assert (out >= 0).all() and (out <= 1).all(), "Output should be in [0, 1] (sigmoid)"
+    assert (out >= 0).all() and (out <= 1).all()
 
 
 def test_kan_forward():
@@ -43,21 +55,21 @@ def test_kan_layer_bsplines():
     layer = EfficientKANLayer(16, 8, grid_size=5, spline_order=3)
     x = torch.randn(4, 16)
     basis = layer.b_splines(x)
-    # Should be (batch, in_features * (grid_size + spline_order))
     assert basis.shape == (4, 16 * (5 + 3))
 
 
-def test_board_to_features():
-    import chess
-    from kanue.data.loader import board_to_features
+def test_sparse_to_dense():
+    from kanue.models.baseline import sparse_to_dense
 
-    board = chess.Board()  # Starting position
-    stm, nstm = board_to_features(board)
-    assert stm.shape == (768,)
-    assert nstm.shape == (768,)
-    # Starting position has 32 pieces -> 32 active features per perspective
-    assert stm.sum() == 32
-    assert nstm.sum() == 32
+    indices = torch.tensor([[0, 5, 767, -1], [3, -1, -1, -1]], dtype=torch.int32)
+    dense = sparse_to_dense(indices, 768)
+    assert dense.shape == (2, 768)
+    assert dense[0, 0] == 1.0
+    assert dense[0, 5] == 1.0
+    assert dense[0, 767] == 1.0
+    assert dense[0].sum() == 3.0
+    assert dense[1, 3] == 1.0
+    assert dense[1].sum() == 1.0
 
 
 def test_dataset():

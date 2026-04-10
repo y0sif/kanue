@@ -1,3 +1,13 @@
-from kanue.data.loader import ChessDataset, load_positions_from_plaintext
+from kanue.data.loader import (
+    BulletformatBatchDataset,
+    BulletformatDataset,
+    ChessDataset,
+    load_bulletformat,
+)
 
-__all__ = ["ChessDataset", "load_positions_from_plaintext"]
+__all__ = [
+    "BulletformatBatchDataset",
+    "BulletformatDataset",
+    "ChessDataset",
+    "load_bulletformat",
+]
