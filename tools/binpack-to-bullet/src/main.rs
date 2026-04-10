@@ -88,16 +88,29 @@ fn main() {
             }
         };
 
-        // Result: sfbinpack uses -1/0/1 (loss/draw/win STM-relative)
-        // ChessBoard::from_str expects 0.0/0.5/1.0
-        let wdl = match entry.result {
-            -1 => "0.0",
-            0 => "0.5",
-            1 => "1.0",
-            _ => "0.5",
+        // sfbinpack: score and result are STM-relative
+        // ChessBoard::from_str expects WHITE-relative (it flips internally for black STM)
+        // So we must convert back to white-relative before passing
+        let is_black = stm == sfbinpack::chess::color::Color::Black;
+        let score_white = if is_black { -entry.score } else { entry.score };
+        let wdl_white = if is_black {
+            // Flip: STM win -> white loss, STM loss -> white win
+            match entry.result {
+                -1 => "1.0",  // STM loses = white wins
+                0 => "0.5",
+                1 => "0.0",   // STM wins = white loses
+                _ => "0.5",
+            }
+        } else {
+            match entry.result {
+                -1 => "0.0",
+                0 => "0.5",
+                1 => "1.0",
+                _ => "0.5",
+            }
         };
 
-        let line = format!("{} | {} | {}", fen, entry.score, wdl);
+        let line = format!("{} | {} | {}", fen, score_white, wdl_white);
         let board: ChessBoard = match line.parse() {
             Ok(b) => b,
             Err(_) => {
