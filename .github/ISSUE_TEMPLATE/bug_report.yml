@@ -1,0 +1,60 @@
+name: Bug Report
+description: Report a bug in kanue
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Data loading
+        - Baseline model
+        - KAN model
+        - KAN layer
+        - Training loop
+        - Drive checkpointing
+        - Notebook (specify which)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this?
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Where are you running this?
+      value: |
+        - Platform: Colab / Local
+        - GPU: T4 / A100 / None
+        - Python: 3.x
+        - PyTorch: x.x
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Output
+      render: shell
+    validations:
+      required: false
