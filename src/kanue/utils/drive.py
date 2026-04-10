@@ -11,7 +11,6 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-
 DRIVE_BASE = Path("/content/drive/MyDrive/kanue")
 
 
@@ -67,7 +66,9 @@ class DriveCheckpointer:
         torch.save(payload, path)
         return path
 
-    def load_checkpoint(self, epoch: int, model: nn.Module, optimizer: torch.optim.Optimizer | None = None) -> dict:
+    def load_checkpoint(
+        self, epoch: int, model: nn.Module, optimizer: torch.optim.Optimizer | None = None
+    ) -> dict:
         """Load a checkpoint from Drive."""
         path = self.ckpt_dir / f"{self.experiment_name}_epoch_{epoch}.pt"
         checkpoint = torch.load(path, weights_only=False)

@@ -23,7 +23,12 @@ def _find_lib() -> Path:
         # Colab: built from cloned repo
         Path("/content/kanue/crates/kanue-parse/target/release/libkanue_parse.so"),
         # Local dev
-        Path(__file__).parent.parent.parent.parent / "crates" / "kanue-parse" / "target" / "release" / "libkanue_parse.so",
+        Path(__file__).parent.parent.parent.parent
+        / "crates"
+        / "kanue-parse"
+        / "target"
+        / "release"
+        / "libkanue_parse.so",
         # Current directory
         Path("./libkanue_parse.so"),
         # Google Drive cache
@@ -73,7 +78,10 @@ def _load_lib():
 
     # batch_fill(batch, data_ptr, count, blend)
     lib.batch_fill.argtypes = [
-        ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_float,
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+        ctypes.c_uint32,
+        ctypes.c_float,
     ]
     lib.batch_fill.restype = None
 
@@ -167,7 +175,9 @@ class NativeBatchLoader(IterableDataset):
         self._batch = NativeBatch(batch_size)
 
     def __iter__(self):
-        indices = np.random.permutation(self.n_positions) if self.shuffle else np.arange(self.n_positions)
+        indices = (
+            np.random.permutation(self.n_positions) if self.shuffle else np.arange(self.n_positions)
+        )
         data_2d = self.data.reshape(-1, 32)
 
         for start in range(0, self.n_positions, self.batch_size):

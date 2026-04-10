@@ -52,12 +52,17 @@ class EfficientKANLayer(nn.Module):
 
         # Uniform grid for B-spline evaluation
         h = (grid_range[1] - grid_range[0]) / grid_size
-        grid = torch.arange(-spline_order, grid_size + spline_order + 1, dtype=torch.float32) * h + grid_range[0]
+        grid = (
+            torch.arange(-spline_order, grid_size + spline_order + 1, dtype=torch.float32) * h
+            + grid_range[0]
+        )
         self.register_buffer("grid", grid.unsqueeze(0).expand(in_features, -1))
 
         # Trainable weights
         self.base_weight = nn.Parameter(torch.empty(out_features, in_features))
-        self.spline_weight = nn.Parameter(torch.empty(out_features, in_features * (grid_size + spline_order)))
+        self.spline_weight = nn.Parameter(
+            torch.empty(out_features, in_features * (grid_size + spline_order))
+        )
 
         # Store init params
         self._scale_noise = scale_noise

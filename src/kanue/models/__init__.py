@@ -1,4 +1,4 @@
 from kanue.models.baseline import NnBoard768
-from kanue.models.kan import KanBoard768, HybridKanBoard768
+from kanue.models.kan import HybridKanBoard768, KanBoard768
 
-__all__ = ["NnBoard768", "KanBoard768", "HybridKanBoard768"]
+__all__ = ["HybridKanBoard768", "KanBoard768", "NnBoard768"]

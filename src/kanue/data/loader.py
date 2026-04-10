@@ -28,15 +28,18 @@ import torch
 from torch.utils.data import Dataset, IterableDataset
 
 # Structured dtype matching bulletformat's ChessBoard (32 bytes)
-CHESSBOARD_DTYPE = np.dtype([
-    ("occ", "u1", (8,)),  # u64 occupancy as 8 little-endian bytes
-    ("pcs", "u1", (16,)), # nibble-packed pieces
-    ("score", "<i2"),     # i16 centipawn eval
-    ("result", "u1"),     # 0=loss, 1=draw, 2=win
-    ("ksq", "u1"),        # STM king square
-    ("opp_ksq", "u1"),    # NSTM king square ^ 56
-    ("extra", "u1", (3,)),
-], align=False)
+CHESSBOARD_DTYPE = np.dtype(
+    [
+        ("occ", "u1", (8,)),  # u64 occupancy as 8 little-endian bytes
+        ("pcs", "u1", (16,)),  # nibble-packed pieces
+        ("score", "<i2"),  # i16 centipawn eval
+        ("result", "u1"),  # 0=loss, 1=draw, 2=win
+        ("ksq", "u1"),  # STM king square
+        ("opp_ksq", "u1"),  # NSTM king square ^ 56
+        ("extra", "u1", (3,)),
+    ],
+    align=False,
+)
 
 
 def _occ_to_squares(occ_bytes: np.ndarray) -> np.ndarray:
@@ -78,8 +81,8 @@ def _extract_piece_info(pcs: np.ndarray, n_pieces: np.ndarray) -> tuple[np.ndarr
         (piece_types, colors): each (N, 32) int32 arrays, -1 padded.
     """
     # Unpack nibbles: low nibble first, then high nibble
-    low = (pcs & 0x0F).astype(np.int32)   # pieces at even indices
-    high = (pcs >> 4).astype(np.int32)     # pieces at odd indices
+    low = (pcs & 0x0F).astype(np.int32)  # pieces at even indices
+    high = (pcs >> 4).astype(np.int32)  # pieces at odd indices
 
     # Interleave: position 0 = low[0], position 1 = high[0], position 2 = low[1], ...
     all_nibbles = np.zeros((len(pcs), 32), dtype=np.int32)
@@ -87,8 +90,8 @@ def _extract_piece_info(pcs: np.ndarray, n_pieces: np.ndarray) -> tuple[np.ndarr
     all_nibbles[:, 1::2] = high
 
     # Decode: color = bit 3, piece_type = bits 0-2
-    colors = (all_nibbles >> 3) & 1       # 0=STM, 1=opponent
-    piece_types = all_nibbles & 0x07      # 0=pawn..5=king
+    colors = (all_nibbles >> 3) & 1  # 0=STM, 1=opponent
+    piece_types = all_nibbles & 0x07  # 0=pawn..5=king
 
     # Mask out unused slots
     for i in range(len(pcs)):
@@ -149,7 +152,7 @@ def bulletformat_to_features_batch(
 
     # Compute targets: sigmoid(score / 400) blended with WDL
     scores = records["score"].astype(np.float32)
-    results = records["result"].astype(np.float32) / 2.0  # 0=loss->0, 1=draw->0.5, 2=win->1
+    records["result"].astype(np.float32) / 2.0  # 0=loss->0, 1=draw->0.5, 2=win->1
 
     eval_targets = 1.0 / (1.0 + np.exp(-scores / 400.0))
 
@@ -191,7 +194,7 @@ class BulletformatDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        rec = self.data[idx:idx+1]  # Keep as structured array
+        rec = self.data[idx : idx + 1]  # Keep as structured array
         stm, nstm, targets = bulletformat_to_features_batch(rec)
 
         if self.wdl_weight > 0:
@@ -244,6 +247,7 @@ class BulletformatBatchDataset(IterableDataset):
 
 
 # -- Legacy support --
+
 
 class ChessDataset(Dataset):
     """PyTorch dataset wrapping pre-loaded numpy arrays (legacy/testing)."""
