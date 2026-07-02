@@ -8,6 +8,20 @@
 
 **kanue** is a research project that replaces the fixed activation functions (CReLU/SCReLU) in chess NNUE evaluation networks with trainable B-spline activations from Kolmogorov-Arnold Networks (KAN). The goal: determine whether learnable activations improve chess position evaluation quality, and at what cost.
 
+## The paper
+
+This repository is the offline prototype behind the paper **"Trainable Activation Functions for Real-Time Chess Engine Evaluation: Custom CUDA Kernels, Quantized Lookup-Table Inference, and Playing-Strength Validation"** (preprint forthcoming on arXiv). It compares KAN and CReLU NNUE post-accumulator heads under identical training conditions on 8M Stockfish-evaluated positions from [linrock/test77](https://huggingface.co/datasets/linrock/test77).
+
+Headline prototype results (vs the matched CReLU baseline):
+
+- **B-spline KAN**: −22% test loss and +2.1pp outcome-prediction accuracy
+- **Hybrid variant** (single KAN layer, at parameter parity): −14% test loss
+
+The production side of the paper lives in two sibling repos:
+
+- [y0sif/bullet](https://github.com/y0sif/bullet) — research fork of the [bullet](https://github.com/jw1912/bullet) trainer: B-spline and ReLU-KAN basis operations as IR nodes with custom CUDA kernels, a fusion pass, and int8 lookup-table export
+- [y0sif/akimbo](https://github.com/y0sif/akimbo) — research fork of the [akimbo](https://github.com/jw1912/akimbo) engine: int8 lookup-table KAN evaluation and SPRT playing-strength validation (see the branch map in that repo's README)
+
 ## Quick Start
 
 Open any notebook in Google Colab (Colab Pro recommended for GPU access):
@@ -69,7 +83,7 @@ Grid size sweep tests `grid_size={3, 5, 8}` to find the spline resolution sweet 
 
 ## How It Works
 
-1. **Data**: Stockfish self-play generates positions with evaluations and game outcomes
+1. **Data**: 8M Stockfish-evaluated positions from [linrock/test77](https://huggingface.co/datasets/linrock/test77) for the paper's experiments (`tools/binpack-to-bullet` converts Stockfish `.binpack` files to bulletformat); the `01` notebook can alternatively generate data via Stockfish self-play
 2. **Encoding**: Board768 features (binary, 768-dim) for side-to-move and non-side-to-move perspectives
 3. **Training**: Identical hyperparameters (Adam, MSE loss, same LR schedule) across all variants
 4. **Comparison**: Loss convergence, winner prediction accuracy, parameter efficiency, training time
@@ -95,6 +109,10 @@ kanue/
     utils/
       drive.py                   # Google Drive checkpointing
       training.py                # Shared training/eval loops
+  crates/
+    kanue-parse/                 # Rust cdylib: fast Board768 batch loading from bulletformat data (via ctypes)
+  tools/
+    binpack-to-bullet/           # Rust CLI: convert Stockfish .binpack (e.g. test77) to bulletformat .data
 ```
 
 ## Local Development
@@ -119,7 +137,7 @@ This project extends [rough_hook](https://github.com/y0sif/rough_hook), which te
 - [KAN: Kolmogorov-Arnold Networks](https://arxiv.org/abs/2404.19756) (Liu et al., 2024)
 - [efficient-kan](https://github.com/Blealtan/efficient-kan) (Blealtan)
 - [marlinflow](https://github.com/jnlt3/marlinflow) (NNUE trainer, architecture reference)
-- [bullet](https://github.com/jw1912/bullet) (Rust NNUE trainer, future integration target)
+- [bullet](https://github.com/jw1912/bullet) (Rust NNUE trainer; the paper's production training uses the [y0sif/bullet](https://github.com/y0sif/bullet) research fork)
 - [Stockfish NNUE](https://github.com/official-stockfish/nnue-pytorch)
 - [LUT-KAN](https://arxiv.org/abs/2601.03332) (quantization for production inference)
 
